@@ -1,6 +1,5 @@
 How to Use Docker Setup
 1. Build the Docker Images
-bash
 
 # Build all images
 docker-compose build
