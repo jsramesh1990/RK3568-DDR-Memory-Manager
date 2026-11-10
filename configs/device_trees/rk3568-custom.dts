@@ -2,9 +2,7 @@
 /*
  * Device Tree for Custom RK3568 Board
  * Template for new hardware designs
- *
- * Copyright (C) 2024 Sebastian
- * All rights reserved.
+
  *
  * INSTRUCTIONS:
  * 1. Copy this file and rename to rk3568-your-board.dts
