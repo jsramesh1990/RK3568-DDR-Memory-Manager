@@ -1,39 +1,159 @@
-How to Use These Device Tree Files
-1. Compile Device Tree
-bash
+# How to Use Device Tree Files (DTS/DTB)
 
-# Install device tree compiler if not installed
+This guide explains how to compile Device Tree Source (DTS) files into Device Tree Blob (DTB) files, use them with U-Boot and the Linux kernel, and create a custom Device Tree for an RK3568-based board.
+
+## 1. Compile Device Tree Files
+
+### Step 1: Install the Device Tree Compiler
+
+Install the Device Tree Compiler (`dtc`) on your Ubuntu host machine:
+
+```bash
+sudo apt-get update
 sudo apt-get install device-tree-compiler
+```
 
-# Compile DTS to DTB
+### Step 2: Compile DTS into DTB
+
+Use the following commands to compile the DTS files into DTB files:
+
+```bash
 dtc -I dts -O dtb -o rk3568-mixtile-edge2.dtb rk3568-mixtile-edge2.dts
+
 dtc -I dts -O dtb -o rk3568-radxa-rock3b.dtb rk3568-radxa-rock3b.dts
+
 dtc -I dts -O dtb -o rk3568-custom.dtb rk3568-custom.dts
+```
 
-2. Use with U-Boot
-bash
+**Explanation:**
+- `-I dts`: Specifies Device Tree Source as the input format.
+- `-O dtb`: Specifies Device Tree Blob as the output format.
+- `-o`: Specifies the output DTB filename.
 
-# Place dtb in U-Boot directory
-cp rk3568-mixtile-edge2.dtb /boot/dtb/
+## 2. Use Device Tree with U-Boot
 
-3. Use with Kernel
-bash
+Copy the compiled DTB file to the board's boot partition:
 
-# Load device tree during kernel boot
+```bash
+sudo mkdir -p /boot/dtb/
+sudo cp rk3568-mixtile-edge2.dtb /boot/dtb/
+```
+
+U-Boot must be configured to load the correct DTB file during system startup.
+
+**Note:** The actual DTB location and filename depend on your boot configuration and Linux distribution.
+
+## 3. Use Device Tree with the Linux Kernel
+
+### Step 1: Build Kernel Device Tree Files
+
+If the DTS file is part of the Linux kernel source tree, build the Device Tree files using:
+
+```bash
 make dtbs
-# Or specify dtb in bootargs
-bootargs = "console=ttyS2,1500000 earlycon=uart8250,mmio32,0xfe660000 root=/dev/mmcblk0p5 rw rootwait"
+```
 
-4. Create Custom Board Support
+For an out-of-tree kernel build, use the appropriate kernel build directory and configuration.
 
-    Copy rk3568-custom.dts to rk3568-your-board.dts
+### Step 2: Configure Kernel Boot Arguments
 
-    Update model and compatible strings
+Example kernel command-line parameters:
 
-    Configure memory size
+```text
+console=ttyS2,1500000 earlycon=uart8250,mmio32,0xfe660000 root=/dev/mmcblk0p5 rw rootwait
+```
 
-    Enable/disable peripherals
+**Important:** These are kernel command-line parameters, not Device Tree properties. Configure them through your bootloader (for example, U-Boot `bootargs`).
 
-    Compile and test
+U-Boot must load the correct DTB and pass its address to the Linux kernel.
 
+## 4. Create Custom Board Support
 
+Follow these steps to create a Device Tree for your custom RK3568 board.
+
+### Step 1: Create a Custom DTS File
+
+Copy an existing board DTS file:
+
+```bash
+cp rk3568-custom.dts rk3568-your-board.dts
+```
+
+### Step 2: Update Board Information
+
+Update the board-specific properties:
+
+- `model`: Set the custom board name.
+- `compatible`: Specify the board and SoC compatibility strings.
+- `memory`: Configure the available RAM size and address.
+- `chosen`: Configure boot-related properties when required.
+
+### Step 3: Configure Peripherals
+
+Enable, disable, or modify hardware peripherals according to your board design:
+
+- UART
+- I2C
+- SPI
+- GPIO
+- Ethernet
+- USB
+- SD/MMC
+- PCIe
+- Regulators and power supplies
+
+### Step 4: Compile the Custom DTS
+
+```bash
+dtc -I dts -O dtb -o rk3568-your-board.dtb rk3568-your-board.dts
+```
+
+### Step 5: Test on the Target Board
+
+1. Copy the DTB to the board's boot partition.
+2. Configure U-Boot to load the custom DTB.
+3. Boot the Linux kernel.
+4. Verify peripheral detection and hardware functionality using kernel logs.
+
+```bash
+dmesg | grep -i -E "uart|i2c|spi|gpio|ethernet"
+```
+
+## 5. Device Tree Compilation Flow
+
+```text
+Device Tree Source (.dts)
+          |
+          v
+Device Tree Compiler (dtc)
+          |
+          v
+Device Tree Blob (.dtb)
+          |
+          v
+       U-Boot
+          |
+          v
+    Linux Kernel
+          |
+          v
+   Hardware Initialization
+```
+
+## 6. Important Notes
+
+- Use a Device Tree that matches your exact board hardware.
+- Verify the `compatible` strings against the board and SoC definitions.
+- Ensure memory addresses, peripheral registers, interrupts, and clock settings match the hardware design.
+- Prefer building kernel-integrated DTS files through the kernel build system because it handles included files and preprocessing.
+- A standalone `dtc` command may require additional include paths or preprocessing for DTS files that use C-style includes.
+- Always keep a backup of the original working DTB before replacing it.
+
+## 7. References
+
+- Linux Kernel Device Tree Documentation: https://docs.kernel.org/devicetree/
+- Device Tree Compiler (DTC): https://github.com/dgibson/dtc
+- U-Boot Documentation: https://docs.u-boot.org/
+
+---
+**End of Guide**
